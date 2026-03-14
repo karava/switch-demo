@@ -119,18 +119,10 @@
   <p class="hint">🔊 Turn sound on for the full experience</p>
 </section>
 
-<script type="importmap">
-{
-  "imports": {
-    "three": "https://cdn.jsdelivr.net/npm/three@0.171.0/build/three.module.js",
-    "three/addons/": "https://cdn.jsdelivr.net/npm/three@0.171.0/examples/jsm/"
-  }
-}
-</script>
 <script type="module">
 import * as THREE from 'three';
-import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
-import { DRACOLoader } from 'three/addons/loaders/DRACOLoader.js';
+import { GLTFLoader } from 'three/examples/jsm/loaders/GLTFLoader.js';
+import { DRACOLoader } from 'three/examples/jsm/loaders/DRACOLoader.js';
 
 const SWITCHES = [
   { name: 'Red', color: 'red', hex: '#ff2222', sounds: ['red-1.mp3','red-2.mp3','red-3.mp3'] },
