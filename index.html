@@ -1,0 +1,281 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Code One — Switch Demo</title>
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body {
+    background: #0a0a0a;
+    color: #fff;
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+    overflow-x: hidden;
+  }
+  .hero {
+    height: 100vh;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    text-align: center;
+    position: relative;
+  }
+  .hero h1 {
+    font-size: 4rem;
+    font-weight: 900;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    margin-bottom: 0.5rem;
+    background: linear-gradient(135deg, #fff, #888);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+  }
+  .hero p {
+    font-size: 1.2rem;
+    color: #888;
+    margin-bottom: 2rem;
+  }
+  .switch-section {
+    padding: 4rem 2rem;
+    text-align: center;
+  }
+  .switch-section h2 {
+    font-size: 2.5rem;
+    font-weight: 800;
+    text-transform: uppercase;
+    margin-bottom: 0.5rem;
+  }
+  .switch-section p {
+    color: #888;
+    margin-bottom: 2rem;
+    font-size: 1.1rem;
+  }
+  .switch-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+    gap: 1.5rem;
+    max-width: 1200px;
+    margin: 0 auto;
+  }
+  .switch-card {
+    position: relative;
+    border-radius: 1.5rem;
+    overflow: hidden;
+    height: 400px;
+    cursor: pointer;
+    user-select: none;
+  }
+  .switch-card canvas { display: block; width: 100%; height: 100%; }
+  .switch-card .label {
+    position: absolute;
+    bottom: 1rem;
+    left: 1.5rem;
+    font-size: 1.8rem;
+    font-weight: 900;
+    text-transform: uppercase;
+    color: #fff;
+    pointer-events: none;
+    z-index: 2;
+  }
+  .switch-card .bg-text {
+    position: absolute;
+    inset: 0;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    font-size: 3rem;
+    font-weight: 900;
+    text-transform: uppercase;
+    color: rgba(255,255,255,0.08);
+    line-height: 1.1;
+    pointer-events: none;
+    z-index: 0;
+    overflow: hidden;
+  }
+  .switch-card.red { background: #1a0505; }
+  .switch-card.blue { background: #050a1a; }
+  .switch-card.brown { background: #1a0f05; }
+  .switch-card.black { background: #111; }
+  .hint {
+    color: #555;
+    font-size: 0.9rem;
+    margin-top: 1rem;
+  }
+</style>
+</head>
+<body>
+
+<section class="hero">
+  <h1>Code One</h1>
+  <p>Click the switches below</p>
+</section>
+
+<section class="switch-section">
+  <h2>Switch Playground</h2>
+  <p>Click and hold each switch to feel the difference</p>
+  <div class="switch-grid" id="switchGrid"></div>
+  <p class="hint">🔊 Turn sound on for the full experience</p>
+</section>
+
+<script type="importmap">
+{
+  "imports": {
+    "three": "https://cdn.jsdelivr.net/npm/three@0.171.0/build/three.module.js",
+    "three/addons/": "https://cdn.jsdelivr.net/npm/three@0.171.0/examples/jsm/"
+  }
+}
+</script>
+<script type="module">
+import * as THREE from 'three';
+import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
+import { DRACOLoader } from 'three/addons/loaders/DRACOLoader.js';
+
+const SWITCHES = [
+  { name: 'Red', color: 'red', hex: '#ff2222', sounds: ['red-1.mp3','red-2.mp3','red-3.mp3'] },
+  { name: 'Blue', color: 'blue', hex: '#2266ff', sounds: ['blue-1.mp3','blue-2.mp3','blue-3.mp3'] },
+  { name: 'Brown', color: 'brown', hex: '#8B4513', sounds: ['brown-1.mp3','brown-2.mp3','brown-3.mp3'] },
+  { name: 'Black', color: 'black', hex: '#333333', sounds: ['black-1.mp3','black-2.mp3','black-3.mp3'] },
+];
+
+// Load the switch model once
+const dracoLoader = new DRACOLoader();
+dracoLoader.setDecoderPath('https://cdn.jsdelivr.net/npm/three@0.171.0/examples/jsm/libs/draco/');
+const loader = new GLTFLoader();
+loader.setDRACOLoader(dracoLoader);
+const gltf = await new Promise((resolve, reject) => {
+  loader.load('switch.gltf', resolve, undefined, reject);
+});
+
+for (const sw of SWITCHES) {
+  const card = document.createElement('div');
+  card.className = `switch-card ${sw.color}`;
+  
+  // Background text
+  const bgText = document.createElement('div');
+  bgText.className = 'bg-text';
+  bgText.innerHTML = Array(6).fill(`${sw.name} `.repeat(4)).join('<br>');
+  card.appendChild(bgText);
+  
+  // Label
+  const label = document.createElement('div');
+  label.className = 'label';
+  label.textContent = sw.name;
+  card.appendChild(label);
+  
+  document.getElementById('switchGrid').appendChild(card);
+
+  // Three.js setup
+  const renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true });
+  renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+  renderer.shadowMap.enabled = true;
+  renderer.toneMapping = THREE.ACESFilmicToneMapping;
+  renderer.toneMappingExposure = 1.2;
+  card.appendChild(renderer.domElement);
+
+  const scene = new THREE.Scene();
+  const camera = new THREE.PerspectiveCamera(7, 1, 0.01, 100);
+  camera.position.set(1.5, 2, 0);
+  camera.lookAt(0, 0, 0);
+
+  // Lighting
+  const ambient = new THREE.AmbientLight(0xffffff, 0.6);
+  scene.add(ambient);
+  const dir = new THREE.DirectionalLight(0xffffff, 1.5);
+  dir.position.set(2, 4, 2);
+  dir.castShadow = true;
+  scene.add(dir);
+  const fill = new THREE.DirectionalLight(0xffffff, 0.3);
+  fill.position.set(-2, 1, -1);
+  scene.add(fill);
+
+  // Clone the model
+  const model = gltf.scene.clone(true);
+  model.scale.set(10, 10, 10);
+  model.rotation.set(Math.PI / 2, 0, Math.PI / 4);
+
+  // Apply materials
+  let stemMesh = null;
+  model.traverse((child) => {
+    if (!child.isMesh) return;
+    child.castShadow = true;
+    child.receiveShadow = true;
+    if (child.name === 'Single_Switch_Mesh_3') {
+      child.material = new THREE.MeshStandardMaterial({ color: sw.hex, roughness: 0.7 });
+      stemMesh = child;
+    } else if (child.name === 'Single_Switch_Mesh_2') {
+      child.material = new THREE.MeshStandardMaterial({ color: '#ffd700', roughness: 0.1, metalness: 1 });
+    } else {
+      child.material = new THREE.MeshStandardMaterial({ color: '#999999', roughness: 0.7 });
+    }
+  });
+
+  scene.add(model);
+
+  // Resize
+  const resize = () => {
+    const rect = card.getBoundingClientRect();
+    renderer.setSize(rect.width, rect.height);
+    camera.aspect = rect.width / rect.height;
+    camera.updateProjectionMatrix();
+  };
+  resize();
+  window.addEventListener('resize', resize);
+
+  // Audio
+  const audioPool = sw.sounds.map(s => { const a = new Audio(s); a.volume = 0.6; return a; });
+
+  // Animation state
+  let pressed = false;
+  let stemZ = 0;
+  let tiltX = Math.PI / 2;
+  let targetStemZ = 0;
+  let targetTiltX = Math.PI / 2;
+
+  card.addEventListener('pointerdown', (e) => {
+    e.preventDefault();
+    if (pressed) return;
+    pressed = true;
+    targetStemZ = 0.005;
+    targetTiltX = Math.PI / 2 + 0.1;
+    const snd = audioPool[Math.floor(Math.random() * audioPool.length)];
+    snd.currentTime = 0;
+    snd.play().catch(() => {});
+  });
+
+  const release = () => {
+    if (!pressed) return;
+    pressed = false;
+    targetStemZ = 0;
+    targetTiltX = Math.PI / 2;
+  };
+  card.addEventListener('pointerup', release);
+  card.addEventListener('pointerleave', release);
+
+  // Render loop
+  const animate = () => {
+    requestAnimationFrame(animate);
+    
+    // Smooth spring-like interpolation
+    if (pressed) {
+      stemZ += (targetStemZ - stemZ) * 0.3;
+      tiltX += (targetTiltX - tiltX) * 0.3;
+    } else {
+      // Elastic-ish release
+      const dz = targetStemZ - stemZ;
+      const dx = targetTiltX - tiltX;
+      stemZ += dz * 0.12;
+      tiltX += dx * 0.08;
+    }
+
+    if (stemMesh) stemMesh.position.z = stemZ;
+    model.rotation.x = tiltX;
+
+    renderer.render(scene, camera);
+  };
+  animate();
+}
+</script>
+</body>
+</html>
